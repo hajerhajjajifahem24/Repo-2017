@@ -1,0 +1,480 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled28.ipynb",
+      "provenance": [],
+      "private_outputs": true,
+      "authorship_tag": "ABX9TyN1N35Je16ID5wfxLM35z/g",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/hajerhajjajifahem24/Repo-2017/blob/master/codiv2019\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1bp7IrANkLdX",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from __future__ import absolute_import, division, print_function, unicode_literals"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "tNq-iHURjW2v",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+        "# It is defined by the kaggle/python docker image: https://github.com/kaggle/docker-python\n",
+        "# For example, here's several helpful packages to load in \n",
+        "#set randomness for reproducibility\n",
+        "from numpy.random import seed\n",
+        "seed(8) #1\n",
+        "from tensorflow import set_random_seed\n",
+        "set_random_seed(7) #2\n",
+        "\n",
+        "#\n",
+        "\n",
+        "import numpy as np # linear algebra\n",
+        "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+        "\n",
+        "# Input data files are available in the \"../input/\" directory.\n",
+        "# For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory\n",
+        "\n",
+        "import os\n",
+        "\n",
+        "\n",
+        "!gdown https://drive.google.com/uc?id=1coM7x3378f-Ou2l6Pg2wldaOI7Dntu1a\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "NRK5vdN9mrsu",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "!unzip Covid_Data_GradientCrescent.zip"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_7llqI_Nm3-M",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "print(os.listdir(\"/content/\"))\n",
+        "\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Va6oud0ZnEl0",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "#Print and remove zips once done\n",
+        "\n",
+        "!rm Covid_Data_GradientCrescent.zip\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "UMhStm34nJJ9",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from os import listdir\n",
+        "data_list = listdir('/content/two/train')"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "FXlTwF1WndOR",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "data_list"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "eLiECJeFnjAZ",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from tensorflow.keras import backend as K\n",
+        "from tensorflow.keras.models import Model ,load_model\n",
+        "from tensorflow.keras.layers import Flatten, Dense, Dropout\n",
+        "from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input\n",
+        "from keras.applications.vgg16 import preprocess_input\n",
+        "from keras.applications.vgg16 import decode_predictions\n",
+        "from keras.applications.vgg16 import VGG16\n",
+        "from tensorflow.keras.optimizers import Adam, RMSprop\n",
+        "from tensorflow.keras.preprocessing.image import ImageDataGenerator\n",
+        "from tensorflow.keras.callbacks import ModelCheckpoint\n",
+        "import numpy as np\n",
+        "import tensorflow as tf"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZpXMxJG4nt7r",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "DATASET_PATH  = '/content/two/train'\n",
+        "test_dir =  '/content/two/test'\n",
+        "IMAGE_SIZE    = (150, 150)\n",
+        "NUM_CLASSES   = len(data_list)\n",
+        "BATCH_SIZE    = 10  # try reducing batch size or freeze more layers if your GPU runs out of memory\n",
+        "NUM_EPOCHS    = 20\n",
+        "LEARNING_RATE =0.0005 #start off with high rate first 0.001 #5e-4"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BL6s8S8Yn1sj",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "#Train datagen here is a preprocessor\n",
+        "train_datagen = ImageDataGenerator(rescale=1./255,\n",
+        "                                   rotation_range=50,\n",
+        "                                   featurewise_center = True,\n",
+        "                                   featurewise_std_normalization = True,\n",
+        "                                   width_shift_range=0.2,\n",
+        "                                   height_shift_range=0.2,\n",
+        "                                   shear_range=0.25,\n",
+        "                                   zoom_range=0.1,\n",
+        "                                   zca_whitening = True,\n",
+        "                                   channel_shift_range = 20,\n",
+        "                                   horizontal_flip = True ,\n",
+        "                                   vertical_flip = True ,\n",
+        "                                   validation_split = 0.2,\n",
+        "                                   fill_mode='constant')\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "xRl2L0Pcn6-V",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "# test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,\n",
+        "#                                    fill_mode='constant')\n",
+        "\n",
+        "train_batches = train_datagen.flow_from_directory(DATASET_PATH,\n",
+        "                                                  target_size=IMAGE_SIZE,\n",
+        "                                                  shuffle=True,\n",
+        "                                                  batch_size=BATCH_SIZE,\n",
+        "                                                  subset = \"training\",\n",
+        "                                                  seed=42,\n",
+        "                                                  class_mode=\"binary\",\n",
+        "                                                 \n",
+        "                                                  )\n",
+        "\n",
+        "valid_batches = train_datagen.flow_from_directory(DATASET_PATH,\n",
+        "                                                  target_size=IMAGE_SIZE,\n",
+        "                                                  shuffle=True,\n",
+        "                                                  batch_size=BATCH_SIZE,\n",
+        "                                                  subset = \"validation\",\n",
+        "                                                  seed=42,\n",
+        "                                                  class_mode=\"binary\",\n",
+        "                                                  \n",
+        "                                                 \n",
+        "                                                  )"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CHjwZ1ssrcDG",
+        "colab_type": "text"
+      },
+      "source": [
+        "new code\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "RwPyOa-2oSkb",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from keras import models\n",
+        "from keras import layers\n",
+        "from keras.applications import VGG16\n",
+        "from keras import optimizers\n",
+        "from keras.layers.core import Flatten, Dense, Dropout, Lambda\n",
+        "\n",
+        "conv_base = VGG16(weights='imagenet',\n",
+        "                  include_top=False,\n",
+        "                  input_shape=(150, 150, 3))\n",
+        "\n",
+        "conv_base.trainable = False\n",
+        "\n",
+        "\n",
+        "model = models.Sequential()\n",
+        "model.add(conv_base)\n",
+        "model.add(layers.Flatten())\n",
+        "model.add(layers.Dense(256, activation='relu'))\n",
+        "model.add(layers.Dense(1, activation='sigmoid'))\n",
+        "\n",
+        "\n",
+        "model.compile(loss='binary_crossentropy',\n",
+        "              \n",
+        "              optimizer=optimizers.Adam(lr=LEARNING_RATE),\n",
+        "              metrics=['acc'])"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mUR0n0F_oax5",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "print(model.summary())"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mIKR2enfqYnu",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "\n",
+        "#FIT MODEL\n",
+        "print(len(train_batches))\n",
+        "print(len(valid_batches))\n",
+        "\n",
+        "STEP_SIZE_TRAIN=train_batches.n//train_batches.batch_size\n",
+        "STEP_SIZE_VALID=valid_batches.n//valid_batches.batch_size\n",
+        "\n",
+        "result=model.fit_generator(train_batches,\n",
+        "                        steps_per_epoch =STEP_SIZE_TRAIN,\n",
+        "                        validation_data = valid_batches,\n",
+        "                        validation_steps = STEP_SIZE_VALID,\n",
+        "                        epochs= NUM_EPOCHS,\n",
+        "#                         \n",
+        "                       )"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "75vXiYt6tGKQ",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import matplotlib.pyplot as plt\n",
+        "\n",
+        "\n",
+        "def plot_acc_loss(result, epochs):\n",
+        "    acc = result.history['acc']\n",
+        "    loss = result.history['loss']\n",
+        "    val_acc = result.history['val_acc']\n",
+        "    val_loss = result.history['val_loss']\n",
+        "    plt.figure(figsize=(15, 5))\n",
+        "    plt.subplot(121)\n",
+        "    plt.plot(range(1,epochs), acc[1:], label='Train_acc')\n",
+        "    plt.plot(range(1,epochs), val_acc[1:], label='Test_acc')\n",
+        "    plt.title('Accuracy over ' + str(epochs) + ' Epochs', size=15)\n",
+        "    plt.legend()\n",
+        "    plt.grid(True)\n",
+        "    plt.subplot(122)\n",
+        "    plt.plot(range(1,epochs), loss[1:], label='Train_loss')\n",
+        "    plt.plot(range(1,epochs), val_loss[1:], label='Test_loss')\n",
+        "    plt.title('Loss over ' + str(epochs) + ' Epochs', size=15)\n",
+        "    plt.legend()\n",
+        "    plt.grid(True)\n",
+        "    plt.show()\n",
+        "    \n",
+        "plot_acc_loss(result, 20)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "92wQjHUWtSjr",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "model.save('Covid_Binary.h5')"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "rtugRnPFtXtS",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "#Dont forget shuffle false. Note that Shuffle False is necessary for predict generator due to Keras's internal shuffling.\n",
+        "#But for true accuracy values in evaluate_generator we should use shuffle_true.\n",
+        "#In this case, the accuracy values are the same, but the same IS NOT true for the multiclass case.\n",
+        "#See https://github.com/keras-team/keras/issues/6499\n",
+        "test_datagen = ImageDataGenerator(rescale=1. / 255)\n",
+        "\n",
+        "eval_generator = test_datagen.flow_from_directory(\n",
+        "        test_dir,target_size=IMAGE_SIZE,\n",
+        "        batch_size=1,\n",
+        "        shuffle=False,\n",
+        "        seed=42,\n",
+        "        \n",
+        "        \n",
+        "        class_mode=\"binary\")\n",
+        "eval_generator.reset()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "yyMhRYTstgrX",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "eval_generator.reset()  \n",
+        "x = model.evaluate_generator(eval_generator,\n",
+        "                           steps = np.ceil(len(eval_generator) / BATCH_SIZE),\n",
+        "                           use_multiprocessing = False,\n",
+        "                           verbose = 1,\n",
+        "                           workers=1\n",
+        "                           )\n",
+        "\n",
+        "\n",
+        "print('Test loss:' , x[0])\n",
+        "print('Test accuracy:',x[1])"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "oY5EZpVwtjqy",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "eval_generator.reset()  \n",
+        "pred = model.predict_generator(eval_generator,1000,verbose=1)\n",
+        "print(\"Predictions finished\")"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "oCXKIRxBupMX",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import cv2\n",
+        "\n",
+        "\n",
+        "import matplotlib.image as mpimg\n",
+        "for index, probability in enumerate(pred):\n",
+        "    image_path = test_dir + \"/\" +eval_generator.filenames[index]\n",
+        "    image = mpimg.imread(image_path)\n",
+        "    #BGR TO RGB conversion using CV2\n",
+        "    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)\n",
+        "\n",
+        "    pixels = np.array(image)\n",
+        "    plt.imshow(pixels)\n",
+        "    \n",
+        "    print(eval_generator.filenames[index])\n",
+        "    if probability > 0.5:\n",
+        "        plt.title(\"%.2f\" % (probability[0]*100) + \"% Normal\")\n",
+        "    else:\n",
+        "        plt.title(\"%.2f\" % ((1-probability[0])*100) + \"% COVID19 Pneumonia\")\n",
+        "    plt.show()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    }
+  ]
+}
